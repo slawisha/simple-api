@@ -41,13 +41,15 @@ class TagController extends ApiController
 
     public function store(Request $request)
     {
-        $name = $request->get('name');
 
         $this->validate($request, [
             'name' => 'required'
         ]);
 
-        //if($validation->fails()) return 'crap';
+        $name = $request->get('name');
+
+
+        return $name;
 
     }
 }
