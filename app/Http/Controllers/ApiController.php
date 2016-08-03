@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests;
-use App\Utilities\PaginatorLimiter;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Pagination\IlluminatePaginatorAdapter;
@@ -16,15 +15,13 @@ class ApiController extends Controller
 
 	const CODE_WRONG_ARGS = 'You passed wrong arguments';
 	const CODE_NOT_FOUND = 'Could not found resource';
-	const CODE_UNAUTHORIZED = 'You are not authorized to view ths page';
+	const CODE_UNAUTHORIZED = 'You are not authorized for this action';
 	const CODE_FORBIDEN = 'The content is forbiden';
 	const CODE_INTERNAL_ERROR = 'Something is wrong with our server, please try again later';
 
-    public function __construct(Manager $fractal, PaginatorLimiter $limiter)
+    public function __construct(Manager $fractal)
     {
-    	$this->fractal = $fractal;
-    	
-    	$this->limiter = $limiter;
+    	$this->fractal = $fractal;    	
     }
 
     public function getStatusCode()
@@ -138,11 +135,11 @@ class ApiController extends Controller
 		return $this->setStatusCode(400)->respondWithError($message, SELF::CODE_WRONG_ARGS);
 	}
 
-
-
-
-
-
-
-
+    public function respondWithSuccess($message = 'Item created')
+    {
+        return $this->respondWithArray([
+            'http_code' => $this->statusCode,
+            'message' => $message
+            ]);
+    }
 }

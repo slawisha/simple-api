@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Lesson extends Model
 {
-    protected  $fillable = ['name'];
+    protected  $fillable = ['title', 'body', 'user_id'];
 
     /**
      * Get user that owns a lesson

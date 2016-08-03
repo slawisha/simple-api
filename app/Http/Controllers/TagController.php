@@ -39,17 +39,48 @@ class TagController extends ApiController
     	} 
     }
 
+    /**
+     * Store a resource
+     * 
+     * @param  Request $request 
+     * @return @Response           
+     */
     public function store(Request $request)
     {
-
         $this->validate($request, [
             'name' => 'required'
         ]);
 
         $name = $request->get('name');
 
+        app('App\Tag')->create(['name' => $name]);
 
-        return $name;
+        return $this->respondWithSuccess();
 
+    }
+
+    public function update(Request $request, $id)
+    {
+        $this->validate($request, [
+                'name' => 'required'
+            ]);
+
+        $name = $request->input('name');
+
+        try {
+
+            $tag = app('App\Tag')->findOrFail($id);
+
+            $tag->name = $name;
+
+            $tag->save();
+
+            return $this->respondWithSuccess('Item updated');
+            
+        } catch (ModelNotFoundException $e) {
+
+            return $this->errorNotFound();
+            
+        }
     }
 }
