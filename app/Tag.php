@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Tag extends Model
 {
-   protected  $fillable = ['name'];
+   protected  $fillable = ['name', 'user_id'];
 
    /**
     * Get all lessons that have a specific tag
@@ -17,4 +17,16 @@ class Tag extends Model
    {
    		return  $this->belongsToMany('App\Lesson');
    }
+
+   /**
+    * Tag is owned by user
+    *   
+    * @return \Illuminate\Database\Eloquent\Relations\belongsToMany 
+    */
+   public function user()
+   {
+      return $this->belongsTo('App\User');
+   }
+
+
 }

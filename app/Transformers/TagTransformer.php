@@ -10,7 +10,7 @@ class TagTransformer extends TransformerAbstract
 	/**
 	 * Transform tag
 	 * 
-	 * @param  Tag    $tag 
+	 * @param  App\Tag  $tag 
 	 * @return array
 	 */
 	public function transform(Tag $tag)

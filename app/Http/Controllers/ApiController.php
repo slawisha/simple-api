@@ -24,17 +24,34 @@ class ApiController extends Controller
     	$this->fractal = $fractal;    	
     }
 
+    /**
+     * Get status code
+     * 
+     * @return int 
+     */
     public function getStatusCode()
     {
     	return $this->statusCode;
     }
 
+    /**
+     * Set status code
+     * 
+     * @param $statusCode [description]
+     */
     public function setStatusCode($statusCode)
     {
     	$this->statusCode = $statusCode;
     	return $this;
     }
 
+    /**
+     * Respond with single item
+     * 
+     * @param  App\Model $item   
+     * @param  Transformer $callback 
+     * @return  @Response 
+     */
     protected function respondWithItem($item, $callback)
     {
     	$resource = new Item($item, $callback);
@@ -44,6 +61,14 @@ class ApiController extends Controller
     	return $this->respondWithArray($rootscope->toArray());
     }
 
+    /**
+     * Respond with item collection
+     * 
+     * @param  App\Paginator\Paginator $paginator
+     * @param  Illuminate\Database|Eloquent\Collection $collection
+     * @param  Transformer $callback
+     * @return [type]             [description]
+     */
     protected function respondWithCollection($paginator, $collection, $callback)
     {
     	$resource = new Collection($collection, $callback);
@@ -135,6 +160,12 @@ class ApiController extends Controller
 		return $this->setStatusCode(400)->respondWithError($message, SELF::CODE_WRONG_ARGS);
 	}
 
+    /**
+     *  Create a response with a 200 HTTP header and a given message
+     * 
+     * @param  string $message
+     * @return @Response
+     */
     public function respondWithSuccess($message = 'Item created')
     {
         return $this->respondWithArray([

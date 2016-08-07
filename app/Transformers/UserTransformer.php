@@ -7,7 +7,12 @@ use League\Fractal\TransformerAbstract;
 
 class UserTransformer extends TransformerAbstract
 {
-
+	/**
+	 * Transform user
+	 * 
+	 * @param  User   $user 
+	 * @return array       
+	 */
 	public function transform(User $user)
 	{
 
@@ -21,6 +26,12 @@ class UserTransformer extends TransformerAbstract
 
 	}
 
+	/**
+	 * Transform users lessons
+	 * 
+	 * @param  User   $user 
+	 * @return array       
+	 */
 	private function transformNestedLessons(User $user)
 	{
 

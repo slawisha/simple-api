@@ -15,9 +15,9 @@ class CreateLessonTagTable extends Migration
         Schema::create('lesson_tag', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('lesson_id')->unsigned()->index();
-            $table->foreign('lesson_id')->references('id')->on('lessons')->onDelete('cascade');
+            $table->foreign('lesson_id')->references('id')->on('lessons');
             $table->integer('tag_id')->unsigned()->index();
-            $table->foreign('tag_id')->references('id')->on('tags')->onDelete('cascade');
+            $table->foreign('tag_id')->references('id')->on('tags');
             $table->timestamps();
         });
     }

@@ -34,6 +34,16 @@ class User extends Authenticatable
         return $this->hasMany('App\Lesson');
     }
 
+    /**
+     * Get tags for a user
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function tags()
+    {
+        return $this->hasMany('App\Tag');
+    }
+
     public function getAuthenticatedUser($value='')
     {
         try {

@@ -2,27 +2,32 @@
 
 namespace App\Http\Controllers;
 
-use App\Exceptions\UserNotLessonOwnerException;
 use App\Http\Requests;
 use App\Lesson;
+use App\Repositories\LessonRepository;
 use App\Traits\PaginatorLimiterTrait;
 use App\Transformers\LessonTransformer;
 use App\Utilities\PaginatorLimiter;
+use Gate;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 
 class LessonController extends ApiController
 {
+    private $lessonRepo;
+
     use PaginatorLimiterTrait;
 
-    public function __construct(Manager $fractal)
+    public function __construct(Manager $fractal, LessonRepository $lessonRepo)
     {
         $this->middleware('jwt.auth', ['only' => [
-                'store', 'update', 'delete'
+                'store', 'update', 'destroy'
             ]]);
 
         parent::__construct($fractal);
+
+        $this->lessonRepo = $lessonRepo;
     }
     /**
      * List all resources
@@ -31,10 +36,9 @@ class LessonController extends ApiController
      */
     public function index(Request $request)
     {
-
         $limit = $this->setItemsPerPage($request->get('limit'));
 
-    	$paginator = Lesson::with('user', 'tags')->paginate($limit);
+    	$paginator = $this->lessonRepo->allPaginated($limit);
 
         $lessons = $paginator->getCollection();
 
@@ -50,7 +54,8 @@ class LessonController extends ApiController
     public function show($id)
     {
     	try {
-    	   $lesson = Lesson::with('tags')->findOrFail($id);
+
+           $lesson = $this->lessonRepo->findLessonWithTags($id);
     		
     	   return $this->respondWithItem($lesson, new LessonTransformer);
     	
@@ -62,85 +67,79 @@ class LessonController extends ApiController
 
     }
 
+    /**
+     * Store a lesson
+     * 
+     * @param  Request $request 
+     * @return @Response           
+     */
     public function store(Request $request)
     {
         $this->validateInput($request);
-
-        $title = $request->input('title');
-        $body = $request->input('body');
+        
         $user = app('App\User')->getAuthenticatedUser();
-        $tagId = $request->input('tag_id') ? : 1;
 
-        $lesson = app('App\Lesson')->create([
-                'title' => $title,
-                'body' => $body,
-                'user_id' => $user->id
-            ]);
-
-
-        $lesson->tags()->attach($tagId);
+        $this->lessonRepo->create($request, $user);
 
         return $this->respondWithSuccess();
     }
 
+    /**
+     * Update lesson
+     * 
+     * @param  Request $request 
+     * @param  int  $id      
+     * @return @Response           
+     */
     public function update(Request $request, $id)
     {
+        check_users_token();
+
         $this->validateInput($request);
 
         try {
-           $lesson = Lesson::with('tags')->findOrFail($id);
-            
-            $title = $request->input('title');
-            $body = $request->input('body');
-            $user = app('App\User')->getAuthenticatedUser();
-            //$tagId = $request->input('tag_id') ? : 1;
 
-            if($lesson->user->id != $user->id)
-                 throw new UserNotLessonOwnerException("You don't own this Lesson");
-            
+            if(!$this->lessonRepo->update($request, $id)) return $this->errorUnauthorized();
 
-           $lesson->title = $title;
-           $lesson->body = $body;
-
-           $lesson->save();
-
-           return $this->respondWithSuccess('Item updated');
+            return $this->respondWithSuccess('Item updated');
         
         } catch (ModelNotFoundException $e) {
         
             return $this->errorNotFound();
                     
-        } catch (UserNotLessonOwnerException $e) {
-            return $this->errorUnauthorized($e->getError());
-        }
+        } 
     }
 
+    /**
+     * Destroy lesson
+     * 
+     * @param  int $id 
+     * @return @Response
+     */
     public function destroy($id)
     {
+        check_users_token();
+        
         try {
-            $lesson = Lesson::findOrFail($id);
-
-            $user = app('App\User')->getAuthenticatedUser();
-
-            if($lesson->user->id != $user->id)
-                 throw new UserNotLessonOwnerException("You don't own this Lesson");
-
-            $lesson->delete();
+            
+            if(!$this->lessonRepo->delete($id)) return $this->errorUnauthorized();
 
 
         } catch (ModelNotFoundException $e) {
 
             return $this->errorNotFound();
 
-        } catch (UserNotLessonOwnerException $e) {
-
-            return $this->errorUnauthorized($e->getError());
-
-        }
+        } 
 
         return $this->respondWithSuccess('Item deleted');
     }
 
+    /**
+     * Validate request
+     *     
+     * @param  Request $request
+     * @return mixed
+     */
     private function validateInput(Request $request)
     {
         $this->validate($request, [

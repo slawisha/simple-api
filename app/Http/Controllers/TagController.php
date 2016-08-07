@@ -3,11 +3,31 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests;
+use App\Repositories\TagRepository;
+use App\Traits\PaginatorLimiterTrait;
 use App\Transformers\TagTransformer;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use League\Fractal\Manager;
+
+
 class TagController extends ApiController
 {
+    private $tagRepo;
+
+    use PaginatorLimiterTrait;
+
+    public function __construct(Manager $fractal, TagRepository $tagRepo)
+    {
+        $this->middleware('jwt.auth', ['only' => [
+                'store', 'update', 'destroy'
+            ]]);
+
+        parent::__construct($fractal);
+
+        $this->tagRepo = $tagRepo;
+    }
+
     /**
      * list all tags
      * 
@@ -15,9 +35,9 @@ class TagController extends ApiController
      */
     public function index(Request $request)
     {
-    	$limit = $this->limiter->setItemsPerPage($request->get('limit'));
+    	$limit = $this->setItemsPerPage($request->get('limit'));
 
-    	$paginator = app('App\Tag')->with('lessons')->paginate($limit);
+    	$paginator = $this->tagRepo->allPaginated($limit);
 
     	$tags = $paginator->getCollection();
 
@@ -28,7 +48,7 @@ class TagController extends ApiController
     {
     	try{
 
-    		$tag = app('App\Tag')->with('lessons')->findOrFail($id);
+    		$tag = $this->findTagWithLessons($id);
     		
     		return $this->respondWithItem($tag, new TagTransformer);
     		
@@ -47,40 +67,65 @@ class TagController extends ApiController
      */
     public function store(Request $request)
     {
-        $this->validate($request, [
-            'name' => 'required'
-        ]);
+        $this->validateInput($request);
 
-        $name = $request->get('name');
+        $user = app('App\User')->getAuthenticatedUser();
 
-        app('App\Tag')->create(['name' => $name]);
+        $this->tagRepo->create($request, $user);
 
-        return $this->respondWithSuccess();
+        return $this->respondWithSuccess('Tag created');
 
     }
 
+    /**
+     * Update a resource
+     * 
+     * @param  Request $request 
+     * @return @Response           
+     */
     public function update(Request $request, $id)
     {
-        $this->validate($request, [
-                'name' => 'required'
-            ]);
-
-        $name = $request->input('name');
+        $this->validateInput($request);
 
         try {
 
-            $tag = app('App\Tag')->findOrFail($id);
+            if(! $this->tagRepo->update($request, $id)) return $this->errorUnauthorized(); 
 
-            $tag->name = $name;
+            return $this->respondWithSuccess('Tag updated');
 
-            $tag->save();
-
-            return $this->respondWithSuccess('Item updated');
             
         } catch (ModelNotFoundException $e) {
 
             return $this->errorNotFound();
             
         }
+    }
+
+    /**
+     * Destroy resource 
+     * 
+     * @param  int $id 
+     * @return @Response     
+     */
+    public function destroy($id)
+    {
+        try{
+
+            if(! $this->tagRepo->delete($id)) return $this->errorUnauthorized();
+
+        } catch (ModelNotFoundException $e) {
+
+            return $this->errorNotFound();
+
+        }
+
+        return $this->respondWithSuccess('Tag deleted');
+    }
+
+    private function validateInput(Request $request)
+    {
+        $this->validate($request, [
+                'name' => 'required'
+            ]);
     }
 }

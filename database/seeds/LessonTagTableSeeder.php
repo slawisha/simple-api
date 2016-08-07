@@ -13,11 +13,12 @@ class LessonTagTableSeeder extends Seeder
     public function run()
     {
         foreach (App\Lesson::all() as $lesson) {
-        	$tags = (array) array_rand(App\Tag::lists('id')->toArray(),rand(1,3));
-        	foreach ( $tags as $tag) {
+            $tagIds = App\Tag::where('user_id', $lesson->user_id)->lists('id')->toArray();
+        	$randTagIdKeys = (array) array_rand( $tagIds, rand(1,count($tagIds)));
+        	foreach ( $randTagIdKeys as $key) {
 	            DB::table('lesson_tag')->insert([
 	                'lesson_id' => $lesson->id,     
-	                'tag_id' => $tag 
+	                'tag_id' => $tagIds[$key]
 	            ]);
         	}
         }

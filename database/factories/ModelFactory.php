@@ -31,5 +31,6 @@ $factory->define(App\Lesson::class, function (Faker\Generator $faker) {
 $factory->define(App\Tag::class, function (Faker\Generator $faker) {
     return [
         'name' => $faker->word,
+        'user_id' => $faker->randomElement(App\User::lists('id')->toArray())
     ];
 });
