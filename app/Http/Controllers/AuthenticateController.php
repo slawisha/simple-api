@@ -29,4 +29,23 @@ class AuthenticateController extends ApiController
 
     	return response()->json(compact('token'));
     }
+
+    public function signup(Request $request)
+    {
+        $this->validate($request, [
+                'name' => 'required|max:255',
+                'email' => 'required|email|max:255|unique:users',
+                'password' => 'required|min:6|confirmed',
+            ]);
+
+        app('App\User')::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => bcrypt($request->password)
+        ]);
+
+        return $this->respondWithSuccess('Welcome aboard');
+    }
+
+
 }
