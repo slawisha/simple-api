@@ -5,7 +5,8 @@ Simple api using [Laraval 5.2](https://laravel.com/) and [fractal package](http:
 ## Instalation
 
 	composer install
-	php artisan migrate
-	php artisan db:seed
 
 Rename .env.example to .env 
+
+	php artisan migrate
+	php artisan db:seed
